@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated MCQs</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #9b7397; /* Fallback color */
+            background:url(../static/assets/background.jpg); /* Replace with your image path or URL */
+            background-size: cover; /* Cover the entire page */
+            background-repeat: no-repeat; /* Prevent the background from repeating */
+            background-attachment: fixed; /* Keep the background fixed during scroll */
+            background-position: center;  
+        }
+        h1{
+            color: #fff;
+        }
+        /* 9b7397 */
+        .btn{
+            background-color: #ad4ea4;
+            border-radius: 30;
+            border-color: #fff;
+            color: #fff;
+
+        }
+        
+        .container {
+            
+            text-align: left;
+            margin-top: 5%;
+        }
+        .card-body {
+            text-align: left;
+        }
+        /* Hide the correct answers initially */
+        .correct-answer {
+            display: none;
+        }
+
+        /* ----- */
+        .badge-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .badge {
+            font-size: 24px;
+            padding: 10px;
+            color: #fff;
+            display: inline-block;
+        }
+        .badge-gold {
+            background-color: #ffd700;
+        }
+        .badge-silver {
+            background-color: #c0c0c0;
+        }
+        .badge-bronze {
+            background-color: #cd7f32;
+        }
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(230, 152, 233, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: #fff;
+            z-index: 1000;
+        }
+        #popup h2 {
+            margin-bottom: 20px;
+        }
+        /* .glitter {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .glitter .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, #fff 0%, #fff 50%, transparent 100%);
+            border-radius: 50%;
+            animation: sparkle 2s infinite;
+        } */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Ensures the confetti doesn't interfere with other interactions */
+            z-index: 9999; /* Makes sure the confetti is on top of other content */
+        }
+        .confetti {
+             position: absolute;
+             width: 10px;
+             height: 10px;
+             background-color: red;
+             animation: fall 3s linear infinite;
+             animation-fill-mode: forwards; /* Ensures the confetti maintains its end state */
+             animation-timing-function: ease-in;
+        }
+
+@keyframes fall {
+    0% {
+        transform: translateY(-100vh);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+}
+
+        /* ---- */
+    </style>
+</head>
+<body>
+    <!-- Start of content -->
+    <h1 class="mt-4 text-center">Generated MCQs</h1>
+    <div class="container" id="mcqs-container">
+        {% for index, mcq in mcqs %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Q{{ index }}: {{ mcq[0] }}?</h5>
+                    <form>
+                        {% set options = ['A', 'B', 'C', 'D'] %}
+                        {% set num_choices = mcq[1]|length %}
+                        {% for choice_index in range(num_choices) %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="answer{{ index }}" id="choice{{ index }}{{ choice_index }}" value="{{ choice_index }}">
+                                <label class="form-check-label" for="choice{{ index }}{{ choice_index }}">
+                                    {{ options[choice_index] }}: {{ mcq[1][choice_index] }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </form>
+                    <!-- Display the correct answer with a class -->
+                    <small class="text-muted correct-answer" data-correct-answer="{{ mcq[2] }}">Correct Answer: {{ options[mcq[2]] }}</small>
+
+                    <!-- <small class="text-muted correct-answer">Correct Answer: {{ mcq[2] }}</small> -->
+                </div>
+            </div>
+        {% endfor %}
+        <!-- Button to show results -->
+        <button id="show-results-btn" class="btn">Show Results</button>
+    </div>
+    <!-- new code -->
+    <div class="badge-container">
+        <div id="badge"></div>
+    </div>
+    <div class="score-container text-center mt-4">
+        <h3 id="score"></h3>
+    </div>
+    <div id="popup">
+        <h2>Well Done!</h2>
+        <p>You've completed the quiz!</p>
+        <div id="popup-badge"></div>
+    </div>
+    <!-- <div class="glitter" id="glitter-container"></div> -->
+    <div class="confetti-container" id="confetti-container"></div>
+
+    <!-- End of content -->
+
+    <!-- JavaScript to handle showing results -->
+<script>
+    document.getElementById('show-results-btn').addEventListener('click', function() {
+        // Get all elements with the 'correct-answer' class
+        var correctAnswers = document.getElementsByClassName('correct-answer');
+        var userAnswers = [];
+        var actualCorrectAnswers = [];
+        var correctCount = 0;
+        // Loop through each element and display it
+        for (var i = 0; i < correctAnswers.length; i++) {
+            correctAnswers[i].style.display = 'block';
+            // -new-
+            actualCorrectAnswers.push(correctAnswers[i].dataset.correctAnswer);
+                var selectedAnswer = document.querySelector('input[name="answer' + (i + 1) + '"]:checked');
+                userAnswers.push(selectedAnswer ? selectedAnswer.value : null);
+                if (selectedAnswer && selectedAnswer.value === correctAnswers[i].dataset.correctAnswer) {
+                    correctCount++;
+                }
+            // --
+        }
+
+    console.log('User Answers:', userAnswers);
+    console.log('Correct Answers:', actualCorrectAnswers);
+
+    document.getElementById('score').innerText = `Score: ${correctCount} / ${correctAnswers.length}`;
+    
+        // --new--
+        fetch('/results', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    answers: userAnswers,
+                    correct_answers: actualCorrectAnswers
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Received Badge Data:', data);
+                displayBadge(data.badge);
+                showPopup(data.badge);
+                createConfettiEffect();
+            });
+            // ----
+        // Hide the button after showing results
+        this.style.display = 'none';
+    });
+
+    // new glitter code
+    function displayBadge(badge) {
+            var badgeDiv = document.getElementById('badge');
+            var badgeClass = '';
+            switch(badge) {
+                case 'Gold':
+                    badgeClass = 'badge badge-gold';
+                    break;
+                case 'Silver':
+                    badgeClass = 'badge badge-silver';
+                    break;
+                case 'Bronze':
+                    badgeClass = 'badge badge-bronze';
+                    break;
+            }
+            badgeDiv.className = badgeClass;
+            badgeDiv.innerText = badge + ' Badge';
+        }
+
+        function showPopup(badge) {
+            var popup = document.getElementById('popup');
+            var popupBadgeDiv = document.getElementById('popup-badge');
+            var badgeClass = '';
+
+            switch(badge) {
+                case 'Gold':
+                    badgeClass = 'badge badge-gold';
+                    break;
+                case 'Silver':
+                    badgeClass = 'badge badge-silver';
+                    break;
+                case 'Bronze':
+                    badgeClass = 'badge badge-bronze';
+                    break;
+            }
+            popupBadgeDiv.className = badgeClass;
+            popupBadgeDiv.innerText = badge + ' Badge';
+
+            popup.style.display = 'block';
+            setTimeout(function() {
+                popup.style.display = 'none';
+                // createGlitterEffect();
+                // createConfettiEffect();
+            }, 4000);
+        }
+
+        // function createGlitterEffect() {
+        //     var glitterContainer = document.getElementById('glitter-container');
+        //     glitterContainer.innerHTML = '';
+        //     var colors = ['#FFD700', '#FF69B4', '#FF4500', '#1E90FF', '#32CD32'];
+        //     for (var i = 0; i < 50; i++) {
+        //         var sparkle = document.createElement('div');
+        //         sparkle.className = 'sparkle';
+        //         sparkle.style.left = Math.random() * 100 + '%';
+        //         sparkle.style.animationDelay = Math.random() * 2 + 's';
+        //         glitterContainer.appendChild(sparkle);
+        //     }
+        // }
+        function createConfettiEffect() {
+            var confettiContainer = document.getElementById('confetti-container');
+            confettiContainer.innerHTML = '';
+            var colors = ['#FFD700', '#FF69B4', '#FF4500', '#1E90FF', '#32CD32'];
+            for (var i = 0; i < 100; i++) {
+                var confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 3+ 's';
+                confettiContainer.appendChild(confetti);
+            }
+        }
+
+        // ----
+</script>
+</body>
+</html>
